@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TodoAuth</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #2a2a3a;
+    --accent: #7c6dfa;
+    --accent2: #fa6d8f;
+    --accent3: #6dfacd;
+    --text: #f0f0f8;
+    --muted: #6b6b8a;
+    --success: #6dfacd;
+    --error: #fa6d8f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,109,250,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,109,250,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes gridMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(40px); }
+  }
+
+  /* Floating orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    animation: orbFloat 8s ease-in-out infinite;
+  }
+  .orb-1 {
+    width: 400px; height: 400px;
+    background: rgba(124,109,250,0.15);
+    top: -100px; left: -100px;
+    animation-delay: 0s;
+  }
+  .orb-2 {
+    width: 300px; height: 300px;
+    background: rgba(250,109,143,0.1);
+    bottom: -80px; right: -80px;
+    animation-delay: 3s;
+  }
+  .orb-3 {
+    width: 200px; height: 200px;
+    background: rgba(109,250,205,0.08);
+    top: 50%; left: 60%;
+    animation-delay: 5s;
+  }
+
+  @keyframes orbFloat {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(20px, -20px) scale(1.05); }
+  }
+
+  /* Main card */
+  .card {
+    position: relative;
+    width: 440px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px;
+    z-index: 10;
+    animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Glowing border top */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  /* Logo / brand */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 36px;
+  }
+
+  .brand-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .brand-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+  }
+
+  .brand-name span {
+    color: var(--accent);
+  }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 32px;
+    align-items: center;
+  }
+
+  .step-dot {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: all 0.4s ease;
+    flex: 1;
+  }
+
+  .step-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .step-dot.done {
+    background: var(--accent3);
+  }
+
+  /* Headings */
+  .step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  /* Form */
+  .field {
+    margin-bottom: 20px;
+    animation: fieldIn 0.4s ease both;
+  }
+
+  @keyframes fieldIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,109,250,0.15);
+  }
+
+  input::placeholder { color: var(--muted); }
+
+  /* OTP input special */
+  .otp-input {
+    letter-spacing: 8px;
+    font-size: 22px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #9c8efa);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(124,109,250,0.4);
+  }
+
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-primary.loading {
+    pointer-events: none;
+    opacity: 0.8;
+  }
+
+  /* Shimmer on button */
+  .btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.4s ease;
+  }
+
+  .btn:hover::after { left: 100%; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--success); }
+  .toast.error { border-color: var(--error); }
+
+  .toast-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .toast.success .toast-dot { background: var(--success); }
+  .toast.error .toast-dot { background: var(--error); }
+
+  /* Step panels */
+  .step-panel {
+    display: none;
+    animation: cardIn 0.4s ease both;
+  }
+  .step-panel.active { display: block; }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Success state */
+  .success-icon {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, rgba(109,250,205,0.2), rgba(109,250,205,0.05));
+    border: 1px solid rgba(109,250,205,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 24px;
+    animation: successPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes successPop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .text-center { text-align: center; }
+
+  /* Resend link */
+  .resend {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .resend a {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .resend a:hover { text-decoration: underline; }
+
+  /* Password strength */
+  .strength-bar {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .strength-seg {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background 0.3s ease;
+  }
+
+  .strength-seg.weak { background: var(--error); }
+  .strength-seg.medium { background: #facc6d; }
+  .strength-seg.strong { background: var(--success); }
+
+  .strength-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="card">
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-icon">✦</div>
+    <div class="brand-name">todo<span>auth</span></div>
+  </div>
+
+  <!-- Step progress -->
+  <div class="steps">
+    <div class="step-dot active" id="dot-0"></div>
+    <div class="step-dot" id="dot-1"></div>
+    <div class="step-dot" id="dot-2"></div>
+    <div class="step-dot" id="dot-3"></div>
+  </div>
+
+  <!-- Step 0: Enter email -->
+  <div class="step-panel active" id="step-0">
+    <div class="step-label">step 01 / 04</div>
+    <h1>What's your email?</h1>
+    <p class="subtitle">We'll send a one-time code to verify it's really you.</p>
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="email-input" placeholder="you@example.com" autocomplete="off"/>
+    </div>
+    <button class="btn btn-primary" onclick="sendOtp()">Send OTP →</button>
+  </div>
+
+  <!-- Step 1: Verify OTP -->
+  <div class="step-panel" id="step-1">
+    <div class="step-label">step 02 / 04</div>
+    <h1>Check your inbox.</h1>
+    <p class="subtitle" id="otp-subtitle">Enter the 6-digit code we sent to your email.</p>
+    <div class="field">
+      <label>One-time password</label>
+      <input type="text" id="otp-input" class="otp-input" placeholder="000000" maxlength="6" autocomplete="off"/>
+    </div>
+    <button class="btn btn-primary" onclick="verifyOtp()">Verify code →</button>
+    <div class="resend">Didn't get it? <a onclick="resendOtp()">Resend code</a></div>
+  </div>
+
+  <!-- Step 2: Set password -->
+  <div class="step-panel" id="step-2">
+    <div class="step-label">step 03 / 04</div>
+    <h1>Set your password.</h1>
+    <p class="subtitle">Min 8 chars, must include letters and numbers.</p>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password-input" placeholder="••••••••••••" oninput="checkStrength(this.value)"/>
+      <div class="strength-bar">
+        <div class="strength-seg" id="s1"></div>
+        <div class="strength-seg" id="s2"></div>
+        <div class="strength-seg" id="s3"></div>
+        <div class="strength-seg" id="s4"></div>
+      </div>
+      <div class="strength-label" id="strength-label"></div>
+    </div>
+    <button class="btn btn-primary" onclick="setPassword()">Create account →</button>
+  </div>
+
+  <!-- Step 3: All done / go to login -->
+  <div class="step-panel" id="step-3">
+    <div class="success-icon">✦</div>
+    <div class="text-center">
+      <div class="step-label" style="justify-content:center;display:flex">all done</div>
+      <h1>You're in.</h1>
+      <p class="subtitle">Account created. Log in with your email and password.</p>
+    </div>
+    <div class="divider">continue</div>
+    <button class="btn btn-primary" onclick="goToLogin()">Go to login →</button>
+  </div>
+
+  <!-- Step 4: Login -->
+  <div class="step-panel" id="step-4">
+    <div class="step-label">login</div>
+    <h1>Welcome back.</h1>
+    <p class="subtitle">Sign in to your account.</p>
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="login-email" placeholder="you@example.com" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••••••"/>
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Sign in →</button>
+    <div class="resend" style="margin-top:16px">No account? <a onclick="goToRegister()">Register here</a></div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+  const API = 'http://localhost:8081/auth';
+  let currentEmail = '';
+  let currentStep = 0;
+
+  function goToStep(n) {
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('step-' + n).classList.add('active');
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('dot-' + i);
+      dot.className = 'step-dot';
+      if (i < n) dot.classList.add('done');
+      if (i === n) dot.classList.add('active');
+    }
+    currentStep = n;
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.className = 'toast ' + type;
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  function setLoading(btn, loading) {
+    btn.classList.toggle('loading', loading);
+    btn.textContent = loading ? 'Please wait...' : btn.dataset.label;
+  }
+
+  async function sendOtp() {
+    const email = document.getElementById('email-input').value.trim();
+    if (!email || !email.includes('@')) {
+      showToast('Enter a valid email address', 'error'); return;
+    }
+    currentEmail = email;
+    const btn = event.target;
+    btn.dataset.label = btn.textContent;
+    btn.textContent = 'Sending...';
+    btn.classList.add('loading');
+
+    try {
+      const res = await fetch(API + '/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'Success') {
+        document.getElementById('otp-subtitle').textContent =
+          'Enter the 6-digit code we sent to ' + email;
+        showToast('OTP sent to ' + email);
+        goToStep(1);
+      } else {
+        showToast(data.msg || 'Something went wrong', 'error');
+      }
+    } catch (e) {
+      showToast('Cannot reach server. Is it running?', 'error');
+    } finally {
+      btn.classList.remove('loading');
+      btn.textContent = 'Send OTP →';
+    }
+  }
+
+  async function verifyOtp() {
+    const otp = document.getElementById('otp-input').value.trim();
+    if (otp.length !== 6) {
+      showToast('OTP must be 6 digits', 'error'); return;
+    }
+    const btn = event.target;
+    btn.textContent = 'Verifying...';
+    btn.classList.add('loading');
+
+    try {
+      const res = await fetch(API + '/verifyOtp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail, otp })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'Success') {
+        showToast('Email verified!');
+        goToStep(2);
+      } else {
+        showToast(data.msg || 'Invalid or expired OTP', 'error');
+      }
+    } catch (e) {
+      showToast('Cannot reach server', 'error');
+    } finally {
+      btn.classList.remove('loading');
+      btn.textContent = 'Verify code →';
+    }
+  }
+
+  async function resendOtp() {
+    showToast('Resending OTP...');
+    try {
+      await fetch(API + '/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail })
+      });
+      showToast('New OTP sent!');
+    } catch(e) {
+      showToast('Could not resend', 'error');
+    }
+  }
+
+  async function setPassword() {
+    const password = document.getElementById('password-input').value;
+    if (password.length < 8) {
+      showToast('Password must be at least 8 characters', 'error'); return;
+    }
+    const btn = event.target;
+    btn.textContent = 'Creating account...';
+    btn.classList.add('loading');
+
+    try {
+      const res = await fetch(API + '/setPassword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'Success') {
+        showToast('Account created!');
+        goToStep(3);
+      } else {
+        showToast(data.msg || 'Failed to set password', 'error');
+      }
+    } catch(e) {
+      showToast('Cannot reach server', 'error');
+    } finally {
+      btn.classList.remove('loading');
+      btn.textContent = 'Create account →';
+    }
+  }
+
+  function checkStrength(val) {
+    const segs = [document.getElementById('s1'), document.getElementById('s2'),
+                  document.getElementById('s3'), document.getElementById('s4')];
+    const label = document.getElementById('strength-label');
+    segs.forEach(s => s.className = 'strength-seg');
+    if (!val) { label.textContent = ''; return; }
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (val.length >= 12) score++;
+    if (/[0-9]/.test(val) && /[a-zA-Z]/.test(val)) score++;
+    if (/[^a-zA-Z0-9]/.test(val)) score++;
+    const cls = score <= 1 ? 'weak' : score <= 2 ? 'medium' : 'strong';
+    const labels = ['', 'Weak', 'Weak', 'Medium', 'Strong'];
+    for (let i = 0; i < score; i++) segs[i].classList.add(cls);
+    label.textContent = labels[score] || '';
+    label.style.color = cls === 'weak' ? 'var(--error)' : cls === 'medium' ? '#facc6d' : 'var(--success)';
+  }
+
+  function goToLogin() {
+    // hide step dots, show login panel
+    document.querySelector('.steps').style.display = 'none';
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('step-4').classList.add('active');
+    if (currentEmail) document.getElementById('login-email').value = currentEmail;
+    currentStep = 4;
+  }
+
+  function goToRegister() {
+    document.querySelector('.steps').style.display = 'flex';
+    goToStep(0);
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) { showToast('Fill in all fields', 'error'); return; }
+    const btn = event.target;
+    btn.textContent = 'Signing in...';
+    btn.classList.add('loading');
+    try {
+      const res = await fetch(API + '/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'Success') {
+        sessionStorage.setItem('userEmail', email);
+        sessionStorage.setItem('jwt', data.token);
+        showToast('Welcome back!');
+        setTimeout(() => { window.location.href = 'todo-home.html'; }, 800);
+      } else {
+        showToast(data.msg || 'Invalid email or password', 'error');
+      }
+    } catch(e) {
+      showToast('Cannot reach server', 'error');
+    } finally {
+      btn.classList.remove('loading');
+      btn.textContent = 'Sign in →';
+    }
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (currentStep === 0) sendOtp();
+    else if (currentStep === 1) verifyOtp();
+    else if (currentStep === 2) setPassword();
+    else if (currentStep === 4) doLogin();
+  });
+</script>
+</body>
+</html>

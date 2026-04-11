@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TodoAuth — Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #f5f2eb;
+    --surface: #ffffff;
+    --ink: #1a1814;
+    --ink2: #4a4640;
+    --ink3: #9a9490;
+    --accent: #e85d2f;
+    --accent2: #2f8de8;
+    --accent3: #2fc48a;
+    --accent4: #e8b82f;
+    --border: #e0ddd6;
+    --card-h: 220px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Cabinet Grotesk', sans-serif;
+    min-height: 100vh;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: multiply;
+  }
+
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease;
+    mix-blend-mode: multiply;
+  }
+
+  /* Noise texture overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9000;
+    opacity: 0.4;
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--ink);
+    padding: 36px 28px;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    animation: slideIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .logo {
+    font-family: 'Clash Display', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--bg);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.7; }
+  }
+
+  .user-pill {
+    background: rgba(245,242,235,0.08);
+    border: 1px solid rgba(245,242,235,0.12);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 36px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .avatar {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    color: white;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .user-info { overflow: hidden; }
+  .user-email {
+    font-size: 12px;
+    color: rgba(245,242,235,0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .user-status {
+    font-size: 11px;
+    color: var(--accent3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .user-status::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent3);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Nav */
+  .nav { flex: 1; }
+
+  .nav-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(245,242,235,0.25);
+    margin-bottom: 10px;
+    margin-top: 24px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    color: rgba(245,242,235,0.5);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: none;
+    transition: all 0.2s ease;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover {
+    background: rgba(245,242,235,0.06);
+    color: var(--bg);
+  }
+
+  .nav-item.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: rgba(245,242,235,0.1);
+    color: rgba(245,242,235,0.5);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .nav-item.active .nav-badge {
+    background: rgba(255,255,255,0.2);
+    color: white;
+  }
+
+  .sidebar-footer {
+    border-top: 1px solid rgba(245,242,235,0.08);
+    padding-top: 20px;
+  }
+
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(245,242,235,0.35);
+    font-size: 13px;
+    cursor: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+    width: 100%;
+    font-family: 'Cabinet Grotesk', sans-serif;
+  }
+
+  .logout-btn:hover {
+    color: var(--accent);
+    background: rgba(232,93,47,0.08);
+  }
+
+  /* Main content */
+  .main {
+    padding: 40px 48px;
+    animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Header */
+  .top-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 40px;
+  }
+
+  .greeting {
+    font-family: 'Clash Display', sans-serif;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+
+  .greeting-sub {
+    color: var(--ink3);
+    font-size: 15px;
+    margin-top: 6px;
+  }
+
+  .date-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--ink2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Stats row */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px;
+    animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(26,24,20,0.08);
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .stat-card:nth-child(2) { animation-delay: 0.15s; }
+  .stat-card:nth-child(3) { animation-delay: 0.2s; }
+  .stat-card:nth-child(4) { animation-delay: 0.25s; }
+
+  .stat-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+
+  .stat-num {
+    font-family: 'Clash Display', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--ink3);
+    margin-top: 4px;
+  }
+
+  /* Add todo bar */
+  .add-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 8px 8px 8px 20px;
+    align-items: center;
+    transition: box-shadow 0.2s;
+  }
+
+  .add-bar:focus-within {
+    box-shadow: 0 0 0 3px rgba(232,93,47,0.12);
+    border-color: var(--accent);
+  }
+
+  .add-input {
+    flex: 1;
+    border: none;
+    background: none;
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+  }
+
+  .add-input::placeholder { color: var(--ink3); }
+
+  .tag-select {
+    border: none;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-size: 12px;
+    color: var(--ink2);
+    outline: none;
+    cursor: none;
+  }
+
+  .add-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .add-btn:hover {
+    background: #d44e22;
+    transform: scale(1.02);
+  }
+
+  /* Filter tabs */
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .filter-tab {
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: none;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--ink2);
+    font-family: 'Cabinet Grotesk', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .filter-tab:hover { border-color: var(--ink2); }
+
+  .filter-tab.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+
+  /* Todo list */
+  .todo-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .todo-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    animation: fadeUp 0.4s ease both;
+    transition: all 0.2s ease;
+    cursor: none;
+  }
+
+  .todo-item:hover {
+    border-color: var(--ink2);
+    transform: translateX(4px);
+  }
+
+  .todo-item.done {
+    opacity: 0.5;
+  }
+
+  .todo-item.done .todo-text {
+    text-decoration: line-through;
+    color: var(--ink3);
+  }
+
+  .check-btn {
+    width: 22px; height: 22px;
+    border-radius: 7px;
+    border: 2px solid var(--border);
+    background: none;
+    cursor: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: transparent;
+  }
+
+  .check-btn:hover { border-color: var(--accent3); }
+
+  .todo-item.done .check-btn {
+    background: var(--accent3);
+    border-color: var(--accent3);
+    color: white;
+  }
+
+  .todo-text {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .todo-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .tag-work { background: rgba(47,141,232,0.1); color: var(--accent2); }
+  .tag-personal { background: rgba(232,93,47,0.1); color: var(--accent); }
+  .tag-health { background: rgba(47,196,138,0.1); color: var(--accent3); }
+  .tag-learn { background: rgba(232,184,47,0.1); color: #b88a00; }
+
+  .todo-time {
+    font-size: 12px;
+    color: var(--ink3);
+    white-space: nowrap;
+  }
+
+  .todo-del {
+    background: none;
+    border: none;
+    color: var(--ink3);
+    cursor: none;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    opacity: 0;
+  }
+
+  .todo-item:hover .todo-del {
+    opacity: 1;
+  }
+
+  .todo-del:hover { color: var(--accent); background: rgba(232,93,47,0.08); }
+
+  /* Progress bar on stat card */
+  .progress-bar {
+    height: 4px;
+    background: var(--bg);
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 48px;
+    color: var(--ink3);
+  }
+
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      todoauth
+    </div>
+
+    <div class="user-pill">
+      <div class="avatar" id="avatar-initials">P</div>
+      <div class="user-info">
+        <div class="user-email" id="sidebar-email">pragati@gmail.com</div>
+        <div class="user-status">online</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">workspace</div>
+      <div class="nav-item active">
+        <span class="nav-icon">◈</span> All tasks
+        <span class="nav-badge" id="nav-total">0</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◉</span> Today
+        <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">○</span> Upcoming
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">✓</span> Completed
+      </div>
+
+      <div class="nav-label">tags</div>
+      <div class="nav-item">
+        <span class="nav-icon" style="color:var(--accent2)">●</span> Work
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon" style="color:var(--accent)">●</span> Personal
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon" style="color:var(--accent3)">●</span> Health
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon" style="color:#e8b82f">●</span> Learning
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">
+        <span>⇤</span> Sign out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="top-bar">
+      <div>
+        <div class="greeting" id="greeting">Good morning ✦</div>
+        <div class="greeting-sub">Here's what's on your plate today.</div>
+      </div>
+      <div class="date-chip">
+        <span>📅</span>
+        <span id="today-date"></span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(232,93,47,0.1); font-size:18px;">◈</div>
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Total tasks</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="prog-total" style="background:var(--accent); width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(47,196,138,0.1); font-size:18px;">✓</div>
+        <div class="stat-num" id="stat-done">0</div>
+        <div class="stat-label">Completed</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="prog-done" style="background:var(--accent3); width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(47,141,232,0.1); font-size:18px;">◉</div>
+        <div class="stat-num" id="stat-pending">0</div>
+        <div class="stat-label">Pending</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="prog-pending" style="background:var(--accent2); width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(232,184,47,0.1); font-size:18px;">⚡</div>
+        <div class="stat-num" id="stat-streak">5</div>
+        <div class="stat-label">Day streak</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="background:var(--accent4); width:70%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add todo -->
+    <div class="add-bar">
+      <input class="add-input" id="todo-input" placeholder="Add a new task... (press Enter)" onkeydown="handleAddKey(event)"/>
+      <select class="tag-select" id="tag-select">
+        <option value="work">● Work</option>
+        <option value="personal">● Personal</option>
+        <option value="health">● Health</option>
+        <option value="learn">● Learning</option>
+      </select>
+      <button class="add-btn" onclick="addTodo()">+ Add task</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <button class="filter-tab active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-tab" onclick="setFilter('pending', this)">Pending</button>
+      <button class="filter-tab" onclick="setFilter('done', this)">Completed</button>
+      <button class="filter-tab" onclick="setFilter('work', this)">Work</button>
+      <button class="filter-tab" onclick="setFilter('personal', this)">Personal</button>
+      <button class="filter-tab" onclick="setFilter('health', this)">Health</button>
+      <button class="filter-tab" onclick="setFilter('learn', this)">Learning</button>
+    </div>
+
+    <!-- Todo list -->
+    <div class="todo-list" id="todo-list"></div>
+  </main>
+</div>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx - 6 + 'px';
+    cursor.style.top = my - 6 + 'px';
+  });
+  function animRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) *.12;
+    ring.style.left = rx - 18 + 'px';
+    ring.style.top = ry - 18 + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+  document.querySelectorAll('button, a, input, select, .nav-item, .todo-item').forEach(el => {
+    el.addEventListener('mouseenter', () => { cursor.style.transform = 'scale(2)'; ring.style.width = '52px'; ring.style.height = '52px'; });
+    el.addEventListener('mouseleave', () => { cursor.style.transform = 'scale(1)'; ring.style.width = '36px'; ring.style.height = '36px'; });
+  });
+
+  // State
+  let todos = [
+    { id: 1, text: 'Set up auth-service Docker config', tag: 'work', done: true, time: '9:00 AM' },
+    { id: 2, text: 'Write OtpService unit tests', tag: 'work', done: false, time: '10:30 AM' },
+    { id: 3, text: 'Configure Gmail SMTP app password', tag: 'work', done: false, time: '11:00 AM' },
+    { id: 4, text: 'Read about Spring Security filter chain', tag: 'learn', done: false, time: '2:00 PM' },
+    { id: 5, text: 'Morning run — 5km', tag: 'health', done: true, time: '7:00 AM' },
+    { id: 6, text: 'Review microservices architecture notes', tag: 'learn', done: false, time: '4:00 PM' },
+    { id: 7, text: 'Grocery run', tag: 'personal', done: false, time: '6:00 PM' },
+  ];
+  let filter = 'all';
+  let nextId = 8;
+
+  // Greeting
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent =
+    (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + ' ✦';
+
+  // Date
+  document.getElementById('today-date').textContent =
+    new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  // User from localStorage/sessionStorage
+  const email = sessionStorage.getItem('userEmail') || 'pragati@gmail.com';
+  document.getElementById('sidebar-email').textContent = email;
+  document.getElementById('avatar-initials').textContent = email[0].toUpperCase();
+
+  function getFiltered() {
+    return todos.filter(t => {
+      if (filter === 'all') return true;
+      if (filter === 'done') return t.done;
+      if (filter === 'pending') return !t.done;
+      return t.tag === filter;
+    });
+  }
+
+  function updateStats() {
+    const total = todos.length;
+    const done = todos.filter(t => t.done).length;
+    const pending = total - done;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-done').textContent = done;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('nav-total').textContent = total;
+    setTimeout(() => {
+      document.getElementById('prog-total').style.width = '100%';
+      document.getElementById('prog-done').style.width = (total ? done/total*100 : 0) + '%';
+      document.getElementById('prog-pending').style.width = (total ? pending/total*100 : 0) + '%';
+    }, 100);
+  }
+
+  function render() {
+    const list = document.getElementById('todo-list');
+    const items = getFiltered();
+    if (!items.length) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">◌</div><div class="empty-text">Nothing here yet. Add a task above!</div></div>`;
+      return;
+    }
+    list.innerHTML = items.map((t, i) => `
+      <div class="todo-item ${t.done ? 'done' : ''}" style="animation-delay:${i * 0.05}s" id="todo-${t.id}">
+        <button class="check-btn" onclick="toggle(${t.id})">${t.done ? '✓' : ''}</button>
+        <span class="todo-text">${t.text}</span>
+        <span class="todo-tag tag-${t.tag}">${t.tag}</span>
+        <span class="todo-time">${t.time}</span>
+        <button class="todo-del" onclick="deleteTodo(${t.id})">✕</button>
+      </div>
+    `).join('');
+    updateStats();
+  }
+
+  function addTodo() {
+    const input = document.getElementById('todo-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const tag = document.getElementById('tag-select').value;
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    todos.unshift({ id: nextId++, text, tag, done: false, time });
+    input.value = '';
+    render();
+  }
+
+  function handleAddKey(e) {
+    if (e.key === 'Enter') addTodo();
+  }
+
+  function toggle(id) {
+    const t = todos.find(t => t.id === id);
+    if (t) { t.done = !t.done; render(); }
+  }
+
+  function deleteTodo(id) {
+    todos = todos.filter(t => t.id !== id);
+    render();
+  }
+
+  function setFilter(f, btn) {
+    filter = f;
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = 'auth-frontend.html';
+  }
+
+  render();
+</script>
+</body>
+</html>
