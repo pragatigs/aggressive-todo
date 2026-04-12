@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.todo.auth_service.dto.request.EmailRequest;
+import com.todo.auth_service.dto.request.LoginRequest;
 import com.todo.auth_service.dto.request.PasswordRequest;
 import com.todo.auth_service.dto.request.VerifyOtpRequest;
 import com.todo.auth_service.dto.response.AuthResponse;
@@ -50,7 +51,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody PasswordRequest req, HttpServletResponse response) {
+    public AuthResponse login(@Valid @RequestBody LoginRequest req, HttpServletResponse response) {
         String email = req.getEmail();
         String password = req.getPassword();
         

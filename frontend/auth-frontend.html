@@ -229,7 +229,32 @@
 
   input::placeholder { color: var(--muted); }
 
-  /* OTP input special */
+  /* Password wrapper with eye toggle */
+  .pw-wrap {
+    position: relative;
+  }
+
+  .pw-wrap input {
+    padding-right: 44px;
+  }
+
+  .pw-eye {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .pw-eye:hover { color: var(--text); }
   .otp-input {
     letter-spacing: 8px;
     font-size: 22px;
@@ -429,6 +454,7 @@
       <input type="email" id="email-input" placeholder="you@example.com" autocomplete="off"/>
     </div>
     <button class="btn btn-primary" onclick="sendOtp()">Send OTP →</button>
+    <div class="resend" style="margin-top:16px">Already have an account? <a onclick="goToLogin()">Sign in</a></div>
   </div>
 
   <!-- Step 1: Verify OTP -->
@@ -448,10 +474,13 @@
   <div class="step-panel" id="step-2">
     <div class="step-label">step 03 / 04</div>
     <h1>Set your password.</h1>
-    <p class="subtitle">Min 8 chars, must include letters and numbers.</p>
+    <p class="subtitle">Min 8 chars, letters, numbers and special characters.</p>
     <div class="field">
       <label>Password</label>
-      <input type="password" id="password-input" placeholder="••••••••••••" oninput="checkStrength(this.value)"/>
+      <div class="pw-wrap">
+        <input type="password" id="password-input" placeholder="••••••••••••" oninput="checkStrength(this.value)"/>
+        <button class="pw-eye" onclick="togglePw('password-input', this)" tabindex="-1">show</button>
+      </div>
       <div class="strength-bar">
         <div class="strength-seg" id="s1"></div>
         <div class="strength-seg" id="s2"></div>
@@ -486,7 +515,10 @@
     </div>
     <div class="field">
       <label>Password</label>
-      <input type="password" id="login-password" placeholder="••••••••••••"/>
+      <div class="pw-wrap">
+        <input type="password" id="login-password" placeholder="••••••••••••"/>
+        <button class="pw-eye" onclick="togglePw('login-password', this)" tabindex="-1">show</button>
+      </div>
     </div>
     <button class="btn btn-primary" onclick="doLogin()">Sign in →</button>
     <div class="resend" style="margin-top:16px">No account? <a onclick="goToRegister()">Register here</a></div>
@@ -554,6 +586,9 @@
           'Enter the 6-digit code we sent to ' + email;
         showToast('OTP sent to ' + email);
         goToStep(1);
+      } else if (res.status === 409) {
+        showToast(data.msg || 'Email already registered', 'error');
+        setTimeout(() => goToLogin(), 1800);
       } else {
         showToast(data.msg || 'Something went wrong', 'error');
       }
@@ -691,7 +726,6 @@
       const data = await res.json();
       if (res.ok && data.status === 'Success') {
         sessionStorage.setItem('userEmail', email);
-        sessionStorage.setItem('jwt', data.token);
         showToast('Welcome back!');
         setTimeout(() => { window.location.href = 'todo-home.html'; }, 800);
       } else {
@@ -703,6 +737,13 @@
       btn.classList.remove('loading');
       btn.textContent = 'Sign in →';
     }
+  }
+
+  function togglePw(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    btn.textContent = isHidden ? 'hide' : 'show';
   }
 
   // Enter key support

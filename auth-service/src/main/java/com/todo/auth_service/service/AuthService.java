@@ -15,6 +15,7 @@ import com.todo.auth_service.exception.UserAlreadyExistsException;
 import com.todo.auth_service.exception.UserNotVerifiedException;
 import com.todo.auth_service.repository.UserRepository;
 
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -28,7 +29,7 @@ public class AuthService {
     private final OtpService otpService;
     private final EmailService emailService;
 
-    public AuthResponseBuilder initiateRegistration (String email){
+    public AuthResponseBuilder initiateRegistration (String email) {
         if (userRepository.existsById(email)){
             throw new UserAlreadyExistsException(email + " already exists! Please login");
         }

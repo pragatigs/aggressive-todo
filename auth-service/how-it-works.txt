@@ -12,3 +12,10 @@ Request comes in
 
 
   Register → OTP → verify → set password → login → JWT cookie set → protected endpoints work
+
+  UserAlreadyExistsException thrown in AuthService
+  → caught by GlobalExceptionHandler
+  → converted to AuthResponse { status: "Failed", msg: "email already exists..." }
+  → sent as JSON with HTTP 409
+  → frontend reads data.msg
+  → showToast(data.msg) displays it to user
