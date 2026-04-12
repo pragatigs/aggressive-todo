@@ -1,9 +1,10 @@
 spring:
   application:
+
     name: auth-service
 
     jwt:
-      secret: your_jwt_secret_key
+      secret: 
       expiration: 3600000
 
   datasource:
@@ -27,7 +28,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: prgs2382@gmail.com
-    password: your_email_password
+    password: 
     properties:
       mail:
         smtp:
@@ -37,3 +38,7 @@ spring:
 
 server:
   port: 8081
+
+logging:
+  level:
+    org.springframework.security: DEBUG

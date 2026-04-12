@@ -10,6 +10,8 @@ import com.todo.auth_service.dto.request.VerifyOtpRequest;
 import com.todo.auth_service.dto.response.AuthResponse;
 import com.todo.auth_service.service.AuthService;
 
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,11 +50,24 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody PasswordRequest req) {
+    public AuthResponse login(@Valid @RequestBody PasswordRequest req, HttpServletResponse response) {
         String email = req.getEmail();
         String password = req.getPassword();
         
-        return authService.userLogin(email, password).build();
+        AuthResponse resp = authService.userLogin(email, password).build();
+        Cookie cookie = new Cookie("jwt", resp.getToken());
+        cookie.setHttpOnly(true);     
+        cookie.setSecure(false);  // true in prod for https
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60);    // 1 hour
+        response.addCookie(cookie);
+        
+        return AuthResponse.builder()
+        .email(email)
+        .status("Success")
+        .msg("Login successful")
+        .token(null)
+        .build();
     }
     
     

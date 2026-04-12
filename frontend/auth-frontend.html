@@ -501,7 +501,7 @@
 </div>
 
 <script>
-  const API = 'http://localhost:8081/auth';
+  const API = '/api/auth';
   let currentEmail = '';
   let currentStep = 0;
 
@@ -545,7 +545,8 @@
       const res = await fetch(API + '/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }),
+        credentials: 'include'
       });
       const data = await res.json();
       if (res.ok && data.status === 'Success') {
@@ -577,7 +578,8 @@
       const res = await fetch(API + '/verifyOtp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail, otp })
+        body: JSON.stringify({ email: currentEmail, otp }),
+        credentials: 'include'
       });
       const data = await res.json();
       if (res.ok && data.status === 'Success') {
@@ -600,7 +602,8 @@
       await fetch(API + '/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail })
+        body: JSON.stringify({ email: currentEmail }),
+        credentials: 'include'
       });
       showToast('New OTP sent!');
     } catch(e) {
@@ -621,7 +624,8 @@
       const res = await fetch(API + '/setPassword', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail, password })
+        body: JSON.stringify({ email: currentEmail, password }),
+        credentials: 'include'
       });
       const data = await res.json();
       if (res.ok && data.status === 'Success') {
@@ -681,7 +685,8 @@
       const res = await fetch(API + '/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
       });
       const data = await res.json();
       if (res.ok && data.status === 'Success') {

@@ -1,0 +1,14 @@
+App starts up
+  → RedisConfig creates StringRedisTemplate       (@Bean)
+  → SecurityConfig creates BCryptPasswordEncoder  (@Bean)
+  → SecurityConfig defines auth rules             (Filter Chain)
+  → JwtProperties loads secret + expiry           (@ConfigurationProperties) ← later
+  → JwtService reads secret via @Value            (@Value)
+
+Request comes in
+  → JwtAuthFilter runs                            (OncePerRequestFilter)
+  → Security Filter Chain checks rules            (Filter Chain)
+  → Controller handles request
+
+
+  Register → OTP → verify → set password → login → JWT cookie set → protected endpoints work
