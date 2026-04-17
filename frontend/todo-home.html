@@ -120,6 +120,13 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .user-pill:hover {
+    background: rgba(245,242,235,0.12);
+    border-color: rgba(245,242,235,0.2);
   }
 
   .avatar {
@@ -235,6 +242,119 @@
   .logout-btn:hover {
     color: var(--accent);
     background: rgba(232,93,47,0.08);
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal-overlay.show {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .modal-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .modal-title {
+    font-family: 'Clash Display', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .modal-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-item:last-child {
+    border-bottom: none;
+  }
+
+  .modal-label {
+    font-size: 12px;
+    color: var(--ink3);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .modal-value {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--ink3);
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-close:hover {
+    color: var(--ink);
   }
 
   /* Main content */
@@ -553,7 +673,7 @@
       todoauth
     </div>
 
-    <div class="user-pill">
+    <div class="user-pill" onclick="showUserModal()">
       <div class="avatar" id="avatar-initials">P</div>
       <div class="user-info">
         <div class="user-email" id="sidebar-email">pragati@gmail.com</div>
@@ -677,6 +797,33 @@
   </main>
 </div>
 
+<!-- User Info Modal -->
+<div class="modal-overlay" id="userModal" onclick="if(event.target.id === 'userModal') closeUserModal()">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeUserModal()">✕</button>
+    <div class="modal-header">
+      <div class="modal-avatar" id="modalAvatar">P</div>
+      <div>
+        <div class="modal-title" id="modalUserEmail">Loading...</div>
+      </div>
+    </div>
+    <div id="userInfoContent">
+      <div class="modal-item">
+        <span class="modal-label">Email</span>
+        <span class="modal-value" id="modalEmailValue">--</span>
+      </div>
+      <div class="modal-item">
+        <span class="modal-label">Status</span>
+        <span class="modal-value" id="modalStatusValue">--</span>
+      </div>
+      <div class="modal-item">
+        <span class="modal-label">Joined</span>
+        <span class="modal-value" id="modalCreatedValue">--</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   // Custom cursor
   const cursor = document.getElementById('cursor');
@@ -700,6 +847,70 @@
     el.addEventListener('mouseleave', () => { cursor.style.transform = 'scale(1)'; ring.style.width = '36px'; ring.style.height = '36px'; });
   });
 
+  // Check if user is logged in
+  const accessToken = localStorage.getItem('accessToken');
+  const userEmail = localStorage.getItem('userEmail');
+  if (!accessToken || !userEmail) {
+    window.location.href = 'auth-frontend.html'; // Redirect if not authenticated
+  }
+
+  // API wrapper to auto-attach token and handle refresh on 401
+  async function apiCall(endpoint, options = {}) {
+    const token = localStorage.getItem('accessToken');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    let res = await fetch(endpoint, {
+      ...options,
+      headers,
+      credentials: 'include'
+    });
+
+    // Handle token expiry (401 Unauthorized)
+    if (res.status === 401) {
+      try {
+        // Try to refresh the token
+        const refreshRes = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          const newToken = refreshData.accessToken;
+          localStorage.setItem('accessToken', newToken);
+
+          // Retry original request with new token
+          headers['Authorization'] = `Bearer ${newToken}`;
+          res = await fetch(endpoint, {
+            ...options,
+            headers,
+            credentials: 'include'
+          });
+        } else {
+          // Refresh failed, redirect to login
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('userEmail');
+          window.location.href = 'auth-frontend.html';
+        }
+      } catch (e) {
+        console.error('Token refresh failed:', e);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('userEmail');
+        window.location.href = 'auth-frontend.html';
+      }
+    }
+
+    return res;
+  }
+
   // State
   let todos = [
     { id: 1, text: 'Set up auth-service Docker config', tag: 'work', done: true, time: '9:00 AM' },
@@ -722,8 +933,8 @@
   document.getElementById('today-date').textContent =
     new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
-  // User from localStorage/sessionStorage
-  const email = sessionStorage.getItem('userEmail') || 'pragati@gmail.com';
+  // User from localStorage
+  const email = localStorage.getItem('userEmail') || 'user@example.com';
   document.getElementById('sidebar-email').textContent = email;
   document.getElementById('avatar-initials').textContent = email[0].toUpperCase();
 
@@ -804,9 +1015,48 @@
   }
 
   function logout() {
-    sessionStorage.clear();
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('accessToken');
     window.location.href = 'auth-frontend.html';
   }
+
+  // User profile modal functions
+  async function showUserModal() {
+    const modal = document.getElementById('userModal');
+    modal.classList.add('show');
+
+    try {
+      const res = await apiCall('/api/auth/me', { method: 'GET' });
+      const data = await res.json();
+
+      if (res.ok && data) {
+        const email = data.email || userEmail;
+        const initial = email[0].toUpperCase();
+        
+        document.getElementById('modalAvatar').textContent = initial;
+        document.getElementById('modalUserEmail').textContent = email;
+        document.getElementById('modalEmailValue').textContent = email;
+        document.getElementById('modalStatusValue').textContent = 'Active';
+        document.getElementById('modalCreatedValue').textContent = data.accountCreated 
+          ? new Date(data.accountCreated).toLocaleDateString()
+          : 'N/A';
+      }
+    } catch (e) {
+      console.error('Failed to fetch user info:', e);
+      const email = localStorage.getItem('userEmail');
+      document.getElementById('modalEmailValue').textContent = email;
+      document.getElementById('modalStatusValue').textContent = 'Active';
+    }
+  }
+
+  function closeUserModal() {
+    document.getElementById('userModal').classList.remove('show');
+  }
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeUserModal();
+  });
 
   render();
 </script>

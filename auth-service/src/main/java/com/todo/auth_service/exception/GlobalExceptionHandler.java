@@ -16,9 +16,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public AuthResponse handleUserAlreadyExists(UserAlreadyExistsException e) {
         return AuthResponse.builder()
-            .status("Failed")
-            .msg(e.getMessage())
-            .build();
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
@@ -26,9 +26,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public AuthResponse handleInvalidCredentials(InvalidCredentialsException e) {
         return AuthResponse.builder()
-            .status("Failed")
-            .msg(e.getMessage())
-            .build();
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
     }
 
     @ExceptionHandler(InvalidOtpException.class)
@@ -36,9 +36,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public AuthResponse handleInvalidOtp(InvalidOtpException e) {
         return AuthResponse.builder()
-            .status("Failed")
-            .msg(e.getMessage())
-            .build();
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
     }
 
     @ExceptionHandler(OtpExpiredException.class)
@@ -46,9 +46,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public AuthResponse handleOtpExpiredResponse(OtpExpiredException e) {
         return AuthResponse.builder()
-            .status("Failed")
-            .msg(e.getMessage())
-            .build();
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
     }
 
     @ExceptionHandler(UserNotFoundException.class)
@@ -56,9 +56,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public AuthResponse handleUserNotFound(UserNotFoundException e) {
         return AuthResponse.builder()
-            .status("Failed")
-            .msg(e.getMessage())
-            .build();
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
     }
 
     @ExceptionHandler(UserNotVerifiedException.class)
@@ -66,9 +66,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public AuthResponse handleUserNotVerified(UserNotVerifiedException e) {
         return AuthResponse.builder()
-            .status("Failed")
-            .msg(e.getMessage())
-            .build();
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
     }
 
     @ExceptionHandler(EmailSendingException.class)
@@ -76,9 +76,43 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public AuthResponse handleEmailUnsent(EmailSendingException e) {
         return AuthResponse.builder()
-            .status("Failed")
-            .msg(e.getMessage())
-            .build();
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
+    }
+
+    @ExceptionHandler(OtpBlockedException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    @ResponseBody
+    public AuthResponse handleOtpBlocked(OtpBlockedException e) {
+        return AuthResponse.builder()
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
+    }
+
+    @ExceptionHandler(OtpCooldownException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    @ResponseBody
+    public AuthResponse handleOtpCooldown(OtpCooldownException e) {
+        return AuthResponse.builder()
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseBody
+    public AuthResponse handleUnauthorized(RuntimeException e) {
+        if ("Unauthorized".equals(e.getMessage())) {
+            return AuthResponse.builder()
+                    .status("Failed")
+                    .msg("Unauthorized - Invalid or missing token")
+                    .build();
+        }
+        // Fall through to generic exception handler for other RuntimeExceptions
+        return handleGenericException(e);
     }
 
     @ExceptionHandler(Exception.class)
@@ -87,9 +121,9 @@ public class GlobalExceptionHandler {
     public AuthResponse handleGenericException(Exception e) {
         System.out.println("EXCEPTION CAUGHT: " + e.getClass().getName() + " - " + e.getMessage());
         return AuthResponse.builder()
-            .status("Failed")
-            .msg("Something went wrong. Please try again.")
-            .build();
+                .status("Failed")
+                .msg("Something went wrong. Please try again.")
+                .build();
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -97,15 +131,15 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public AuthResponse handleValidationException(MethodArgumentNotValidException e) {
         String message = e.getBindingResult()
-            .getFieldErrors()
-            .stream()
-            .map(error -> error.getDefaultMessage())
-            .findFirst()
-            .orElse("Invalid input");
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getDefaultMessage())
+                .findFirst()
+                .orElse("Invalid input");
 
         return AuthResponse.builder()
-            .status("Failed")
-            .msg(message)
-            .build();
+                .status("Failed")
+                .msg(message)
+                .build();
     }
 }

@@ -22,15 +22,26 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email) {
+    public String generateAccessToken(String email) {
 
         return Jwts.builder()
                 .setSubject(email)              // who is user
+                .claim("type", "access")
                 .setIssuedAt(new Date())        // current time
-                .setExpiration(new Date(System.currentTimeMillis() + expiration)) // 1 hour
+                .setExpiration(new Date(System.currentTimeMillis() + 1000*30)) // 1 hour, test - 30 secs
                 .signWith(getSigningKey())
                 .compact();
     }
+
+    public String generateRefreshToken(String email) {
+    return Jwts.builder()
+            .setSubject(email)
+            .claim("type", "refresh")
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10)) // 1 day, test - 10 mins
+            .signWith(getSigningKey())
+            .compact();
+}
 
     public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();

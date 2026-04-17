@@ -1,20 +1,20 @@
 package com.todo.auth_service.config;
 
-import java.util.List;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-
 import com.todo.auth_service.service.JwtService;
+
 import java.io.IOException;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
@@ -26,41 +26,34 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
-                                    throws ServletException, IOException{
+            throws ServletException, IOException {
 
-        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        String authHeader = request.getHeader("Authorization");
 
-        if (cookies == null) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = null;
-        for (jakarta.servlet.http.Cookie cookie : cookies) {
-            if (cookie.getName().equals("jwt")) {
-                token = cookie.getValue();
-                break;
-            }
-        }
-        if (token == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        String token = authHeader.substring(7);
 
         try {
             String email = jwtService.extractEmail(token);
 
-            if (email != null && jwtService.isTokenValid(token, email)) {
-                UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(
-                        email,
-                        null,
-                        List.of()
-                    );
-                SecurityContextHolder.getContext().setAuthentication(auth);
+            if (jwtService.isTokenValid(token, email)) {
+
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                null,
+                                Collections.emptyList()
+                        );
+
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
+
         } catch (Exception e) {
-            // invalid token — do nothing, Spring handles 401
+            // invalid token → do nothing (request will fail later)
         }
 
         filterChain.doFilter(request, response);

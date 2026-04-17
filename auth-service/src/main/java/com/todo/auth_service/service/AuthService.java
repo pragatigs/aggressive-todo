@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import com.todo.auth_service.dto.response.AuthResponse.AuthResponseBuilder;
 import com.todo.auth_service.entity.UserEntity;
 import com.todo.auth_service.exception.InvalidCredentialsException;
 import com.todo.auth_service.exception.UserAlreadyExistsException;
+import com.todo.auth_service.exception.UserNotFoundException;
 import com.todo.auth_service.exception.UserNotVerifiedException;
 import com.todo.auth_service.repository.UserRepository;
 
@@ -29,30 +31,40 @@ public class AuthService {
     private final OtpService otpService;
     private final EmailService emailService;
 
-    public AuthResponseBuilder initiateRegistration (String email) {
-        if (userRepository.existsById(email)){
+    public AuthResponseBuilder getUserByEmail(String email) {
+        UserEntity user = userRepository.findById(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        return AuthResponse.builder()
+                .email(email)
+                .status("Success")
+                .msg("User found")
+                .accountCreated(user.getAccountCreated());
+    }
+
+    public AuthResponseBuilder initiateRegistration(String email) {
+        if (userRepository.existsById(email)) {
             throw new UserAlreadyExistsException(email + " already exists! Please login");
-        }
-        else{
+        } else {
             String generatedOtp = otpService.generateAndStoreOtp(email);
 
             emailService.sendEmail(email, generatedOtp);
 
             return AuthResponse.builder().email(email)
-            .status("Success").msg("OTP generated for email successfully: "+email)
-            .token(null);
+                    .status("Success").msg("OTP generated for email successfully: " + email)
+                    .accessToken(null);
         }
     }
 
-    public AuthResponseBuilder verifyOtp (String email, String otp){
+    public AuthResponseBuilder verifyOtp(String email, String otp) {
         otpService.validateAndDeleteOtp(email, otp);
         stringRedisTemplate.opsForValue().set("verified:" + email, "true", 10, TimeUnit.MINUTES);
         return AuthResponse.builder().email(email)
-            .status("Success").msg("Email verified successfully: "+email)
-            .token(null);
+                .status("Success").msg("Email verified successfully: " + email)
+                .accessToken(null);
     }
 
-    public AuthResponseBuilder setPassword(String email, String password){
+    public AuthResponseBuilder setPassword(String email, String password) {
 
         String verified = stringRedisTemplate.opsForValue().get("verified:" + email);
         if (verified == null) {
@@ -65,27 +77,29 @@ public class AuthService {
         userRepository.save(userEntity);
         stringRedisTemplate.delete("verified:" + email);
         return AuthResponse.builder().email(email)
-            .status("Success").msg("Email password set successfully: "+email)
-            .token(null);
+                .status("Success").msg("Email password set successfully: " + email)
+                .accessToken(null);
 
     }
 
-    public AuthResponseBuilder userLogin(String email, String password){
+    public AuthResponseBuilder userLogin(String email, String password) {
         UserEntity user = userRepository.findById(email)
-            .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password!"));
-        
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password!"));
+
         if (!user.isEmailVerified()) {
             throw new UserNotVerifiedException("Email not verified. Please verify your email first");
         }
 
-        if (!passwordEncoder.matches(password, user.getPassword())){
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new InvalidCredentialsException("Invalid email or password!");
         }
-        String jwtToken = jwtService.generateToken(email);
+        String jwtToken = jwtService.generateAccessToken(email);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setLastActive(LocalDateTime.now());
         return AuthResponse.builder().email(email)
-        .status("Success").msg("Login successful: "+email)
-        .token(jwtToken);
+                .status("Success").msg("Login successful: " + email)
+                .accessToken(jwtToken);
 
     }
-    
+
 }

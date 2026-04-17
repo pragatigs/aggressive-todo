@@ -19,3 +19,22 @@ Request comes in
   → sent as JSON with HTTP 409
   → frontend reads data.msg
   → showToast(data.msg) displays it to user
+
+
+Login
+  → server issues access token (15min) + refresh token (7days)
+  → both stored as HttpOnly cookies
+
+User makes requests
+  → access token sent automatically
+  → works for 15 minutes
+
+Access token expires
+  → frontend hits POST /auth/refresh
+  → server reads refresh token cookie
+  → validates it
+  → issues new access token
+  → old access token replaced
+
+Refresh token expires
+  → user must log in again

@@ -537,6 +537,77 @@
   let currentEmail = '';
   let currentStep = 0;
 
+  // Check if user is already logged in
+  function checkExistingSession() {
+    const token = localStorage.getItem('accessToken');
+    const email = localStorage.getItem('userEmail');
+    
+    if (token && email) {
+      // User has a valid token, redirect to home
+      window.location.href = 'todo-home.html';
+    }
+  }
+
+  // Check session when page loads
+  window.addEventListener('load', checkExistingSession);
+
+  // API wrapper to auto-attach token and handle refresh on 401
+  async function apiCall(endpoint, options = {}) {
+    const token = localStorage.getItem('accessToken');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    let res = await fetch(API + endpoint, {
+      ...options,
+      headers,
+      credentials: 'include'
+    });
+
+    // Handle token expiry (401 Unauthorized)
+    if (res.status === 401) {
+      try {
+        // Try to refresh the token
+        const refreshRes = await fetch(API + '/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          const newToken = refreshData.accessToken;
+          localStorage.setItem('accessToken', newToken);
+
+          // Retry original request with new token
+          headers['Authorization'] = `Bearer ${newToken}`;
+          res = await fetch(API + endpoint, {
+            ...options,
+            headers,
+            credentials: 'include'
+          });
+        } else {
+          // Refresh failed, redirect to login
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('userEmail');
+          window.location.href = 'auth-frontend.html';
+        }
+      } catch (e) {
+        console.error('Token refresh failed:', e);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('userEmail');
+        window.location.href = 'auth-frontend.html';
+      }
+    }
+
+    return res;
+  }
+
   function goToStep(n) {
     document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('step-' + n).classList.add('active');
@@ -574,11 +645,9 @@
     btn.classList.add('loading');
 
     try {
-      const res = await fetch(API + '/register', {
+      const res = await apiCall('/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-        credentials: 'include'
+        body: JSON.stringify({ email })
       });
       const data = await res.json();
       if (res.ok && data.status === 'Success') {
@@ -610,11 +679,9 @@
     btn.classList.add('loading');
 
     try {
-      const res = await fetch(API + '/verifyOtp', {
+      const res = await apiCall('/verifyOtp', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail, otp }),
-        credentials: 'include'
+        body: JSON.stringify({ email: currentEmail, otp })
       });
       const data = await res.json();
       if (res.ok && data.status === 'Success') {
@@ -634,11 +701,9 @@
   async function resendOtp() {
     showToast('Resending OTP...');
     try {
-      await fetch(API + '/register', {
+      await apiCall('/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail }),
-        credentials: 'include'
+        body: JSON.stringify({ email: currentEmail })
       });
       showToast('New OTP sent!');
     } catch(e) {
@@ -656,14 +721,17 @@
     btn.classList.add('loading');
 
     try {
-      const res = await fetch(API + '/setPassword', {
+      const res = await apiCall('/setPassword', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail, password }),
-        credentials: 'include'
+        body: JSON.stringify({ email: currentEmail, password })
       });
       const data = await res.json();
       if (res.ok && data.status === 'Success') {
+        // Store token for next session
+        localStorage.setItem('userEmail', currentEmail);
+        if (data.accessToken) {
+          localStorage.setItem('accessToken', data.accessToken);
+        }
         showToast('Account created!');
         goToStep(3);
       } else {
@@ -709,6 +777,13 @@
     goToStep(0);
   }
 
+  function logout() {
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('accessToken');
+    goToRegister();
+    showToast('Logged out successfully');
+  }
+
   async function doLogin() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
@@ -717,15 +792,15 @@
     btn.textContent = 'Signing in...';
     btn.classList.add('loading');
     try {
-      const res = await fetch(API + '/login', {
+      const res = await apiCall('/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include'
+        body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       if (res.ok && data.status === 'Success') {
-        sessionStorage.setItem('userEmail', email);
+        // Store token and email in localStorage for persistence
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('accessToken', data.accessToken);
         showToast('Welcome back!');
         setTimeout(() => { window.location.href = 'todo-home.html'; }, 800);
       } else {
