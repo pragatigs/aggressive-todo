@@ -1,0 +1,32 @@
+spring:
+  application:
+
+    name: task-service
+
+    jwt:
+      secret: -- add a long secret key here  --
+      access-expiration: 3600000
+      token-expiration: 604800000
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/task_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  task:
+    scheduling:
+      enabled: true
+
+server:
+  port: 8082
+
+logging:
+  level:
+    org.springframework.security: DEBUG

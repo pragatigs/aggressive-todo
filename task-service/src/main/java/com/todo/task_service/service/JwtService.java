@@ -1,4 +1,4 @@
-package com.todo.auth_service.service;
+package com.todo.task_service.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -32,7 +32,7 @@ public class JwtService {
                 .setSubject(email)              // who is user
                 .claim("type", "access")
                 .setIssuedAt(new Date())        // current time
-                .setExpiration(new Date(System.currentTimeMillis() + 1000*60*60)) // 1 hour, test - 30 secs
+                .setExpiration(new Date(System.currentTimeMillis() + 1000*30)) // 1 hour, test - 30 secs
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -42,7 +42,7 @@ public class JwtService {
             .setSubject(email)
             .claim("type", "refresh")
             .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 1 day, test - 10 mins
+            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10)) // 1 day, test - 10 mins
             .signWith(getSigningKey())
             .compact();
 }

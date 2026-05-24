@@ -1,23 +1,45 @@
 version: '3.8'
+
+networks:
+  todo-network:
+    driver: bridge
+
 services:
   postgres:
     image: postgres:15
     container_name: auth_postgres
     environment:
-      POSTGRES_DB: auth_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - todo-network
 
   redis:
     image: redis:7
     container_name: auth_redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - todo-network
 
   auth-service:
-    build: auth-service/
+    build: ./auth-service
     container_name: auth_service
     ports:
       - "8081:8081"
@@ -28,9 +50,41 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     depends_on:
-      - postgres
-      - redis
-  
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    networks:
+      - todo-network
+
+  task-service:
+    build: ./task-service
+    container_name: task_service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/task_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      APPLICATION_JWT_SECRET: your-secret-here
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    networks:
+      - todo-network
+
   frontend:
     image: nginx:alpine
     container_name: todo_frontend
@@ -40,4 +94,9 @@ services:
       - ./frontend:/usr/share/nginx/html
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      - auth-service
+      auth-service:
+        condition: service_healthy
+      task-service:
+        condition: service_healthy
+    networks:
+      - todo-network

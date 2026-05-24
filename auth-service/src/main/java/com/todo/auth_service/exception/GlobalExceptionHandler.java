@@ -51,6 +51,16 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    @ExceptionHandler(ResetTokenExpiredException.class)
+    @ResponseStatus(HttpStatus.GONE)
+    @ResponseBody
+    public AuthResponse handleResetTokenExpiredResponse(ResetTokenExpiredException e) {
+        return AuthResponse.builder()
+                .status("Failed")
+                .msg(e.getMessage())
+                .build();
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody

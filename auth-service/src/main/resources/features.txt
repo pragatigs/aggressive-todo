@@ -1,0 +1,10 @@
+Registration    → email → OTP → verify → set password  ✓
+Login           → email + password → JWT (access + refresh) ✓
+JWT storage     → accessToken in localStorage, refreshToken in HttpOnly cookie ✓
+Token refresh   → automatic via apiCall wrapper ✓
+Forgot password → reset link via email ✓
+Reset password  → token validated, new password set ✓
+Rate limiting   → OTP cooldown 30s, max 3 attempts, 15min block ✓
+Security        → BCrypt, HttpOnly cookie, vague error messages ✓
+Frontend        → full auth flow + todo home ✓
+Docker          → all services containerized ✓

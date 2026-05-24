@@ -1,5 +1,6 @@
 package com.todo.auth_service.controller;
 
+import com.todo.auth_service.service.EmailService;
 // import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -7,8 +8,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.todo.auth_service.dto.request.EmailRequest;
 import com.todo.auth_service.dto.request.LoginRequest;
 import com.todo.auth_service.dto.request.PasswordRequest;
+import com.todo.auth_service.dto.request.ResetPasswordRequest;
 import com.todo.auth_service.dto.request.VerifyOtpRequest;
 import com.todo.auth_service.dto.response.AuthResponse;
+import com.todo.auth_service.exception.ResetTokenExpiredException;
 import com.todo.auth_service.service.AuthService;
 import com.todo.auth_service.service.JwtService;
 
@@ -19,8 +22,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.UUID;
+
+import org.springframework.data.redis.connection.StringRedisConnection;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
@@ -31,6 +39,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
 
+
     @GetMapping("/me")
     public AuthResponse getUserInfo(Authentication authentication) {
         if (authentication == null) {
@@ -38,14 +47,14 @@ public class AuthController {
         }
         String email = authentication.getName();
 
-        return authService.getUserByEmail(email).build();
+        return authService.getUserByEmail(email);
     }
 
     @PostMapping("/register")
     public AuthResponse register(@Valid @RequestBody EmailRequest req) {
 
         String userEmail = req.getEmail();
-        return authService.initiateRegistration(userEmail).build();
+        return authService.initiateRegistration(userEmail);
     }
 
     @PostMapping("/verifyOtp")
@@ -54,7 +63,7 @@ public class AuthController {
         String email = req.getEmail();
         String otp = req.getOtp();
 
-        return authService.verifyOtp(email, otp).build();
+        return authService.verifyOtp(email, otp);
     }
 
     @PostMapping("/setPassword")
@@ -62,7 +71,7 @@ public class AuthController {
         String email = req.getEmail();
         String password = req.getPassword();
 
-        return authService.setPassword(email, password).build();
+        return authService.setPassword(email, password);
     }
 
     @PostMapping("/login")
@@ -76,6 +85,9 @@ public class AuthController {
         String accessToken = jwtService.generateAccessToken(email);
         String refreshToken = jwtService.generateRefreshToken(email);
 
+        System.out.println(accessToken);
+        System.out.println(refreshToken);
+
         Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(false); // true in prod
@@ -88,8 +100,28 @@ public class AuthController {
                 .email(email)
                 .status("Success")
                 .msg("Login successful")
-                .accessToken(accessToken)
-                .build();
+                .accessToken(accessToken).build();
+    }
+
+    @PostMapping("/forgot-password")
+    public AuthResponse forgotPassword (@RequestBody EmailRequest req) {
+        System.out.println("================================= request "+req);
+
+        return authService.forgotPassword(req.getEmail());
+        // return AuthResponse.builder()
+        //     .status("Success")
+        //     .msg("Endpoint hit")
+        //     .build();
+    }
+
+    @GetMapping("/reset-info")
+    public AuthResponse resetInfo(@RequestParam String token) {
+        return authService.resetInfo(token);
+    }
+    @PostMapping("/reset-password")
+    public AuthResponse resetPassword(@RequestParam String token, @RequestBody ResetPasswordRequest request) {
+
+        return authService.resetPassword(token, request.getNewPassword());
     }
 
     @PostMapping("/refresh")
@@ -114,6 +146,7 @@ public class AuthController {
             throw new RuntimeException("Invalid refresh token");
         }
         String newAccessToken = jwtService.generateAccessToken(email);
+        System.out.println(newAccessToken);
         return AuthResponse.builder()
                 .email(email)
                 .accessToken(newAccessToken)

@@ -4,11 +4,12 @@ spring:
     name: auth-service
 
     jwt:
-      secret: 
-      expiration: 3600000
+      secret: -- add a long secret key here  --
+      access-expiration: 3600000
+      token-expiration: 604800000
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/auth_db
+    url: jdbc:postgresql://auth_postgres:5432/auth_db
     username: postgres
     password: postgres
   jpa:
@@ -21,14 +22,14 @@ spring:
 
   data:
     redis:
-      host: localhost
+      host: auth_redis
       port: 6379
 
   mail:
     host: smtp.gmail.com
     port: 587
-    username: prgs2382@gmail.com
-    password: 
+    username: -- add your email here --
+    password: -- add your email password here for smtp service --
     properties:
       mail:
         smtp:

@@ -1,0 +1,9 @@
+Task ID in Frontend - 
+
+Login → get token
+Dashboard → fetch paginated tasks for that user
+Render → each item carries its UUID
+Click → fetch by UUID (with user check)
+
+how does frontend know the task id of the particular task from the ui?
+Backend → sends taskId → Frontend stores it → Embeds in HTML → Passes to functions when needed

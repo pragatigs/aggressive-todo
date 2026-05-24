@@ -27,7 +27,7 @@ Login
 
 User makes requests
   → access token sent automatically
-  → works for 15 minutes
+  → works for 10 minutes
 
 Access token expires
   → frontend hits POST /auth/refresh
@@ -38,3 +38,23 @@ Access token expires
 
 Refresh token expires
   → user must log in again
+
+Login
+ ↓
+Refresh token valid for 30 days
+ ↓
+Access JWT valid for 15 min
+ ↓
+JWT expires
+ ↓
+Use refresh token
+ ↓
+Get new JWT
+ ↓
+Repeat for 30 days
+ ↓
+Refresh token expires
+ ↓
+Cannot mint new JWT
+ ↓
+Login again
