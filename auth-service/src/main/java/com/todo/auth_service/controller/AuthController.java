@@ -1,6 +1,5 @@
 package com.todo.auth_service.controller;
 
-import com.todo.auth_service.service.EmailService;
 // import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,7 +10,6 @@ import com.todo.auth_service.dto.request.PasswordRequest;
 import com.todo.auth_service.dto.request.ResetPasswordRequest;
 import com.todo.auth_service.dto.request.VerifyOtpRequest;
 import com.todo.auth_service.dto.response.AuthResponse;
-import com.todo.auth_service.exception.ResetTokenExpiredException;
 import com.todo.auth_service.service.AuthService;
 import com.todo.auth_service.service.JwtService;
 
@@ -23,12 +21,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.UUID;
 
-import org.springframework.data.redis.connection.StringRedisConnection;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController

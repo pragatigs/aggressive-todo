@@ -4,7 +4,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.todo.task_service.dto.request.TaskRequest;
 import com.todo.task_service.dto.response.TaskResponse;
-import com.todo.task_service.entity.TaskEntity;
 import com.todo.task_service.service.TaskService;
 
 import lombok.RequiredArgsConstructor;

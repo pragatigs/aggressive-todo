@@ -6,12 +6,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.todo.auth_service.dto.response.AuthResponse;
-import com.todo.auth_service.dto.response.AuthResponse.AuthResponseBuilder;
 import com.todo.auth_service.entity.UserEntity;
 import com.todo.auth_service.exception.InvalidCredentialsException;
 import com.todo.auth_service.exception.ResetTokenExpiredException;

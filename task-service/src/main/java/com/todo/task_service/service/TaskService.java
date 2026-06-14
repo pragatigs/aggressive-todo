@@ -1,11 +1,8 @@
 package com.todo.task_service.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.Locale.Category;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +11,6 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.todo.task_service.dto.request.TaskRequest;
 import com.todo.task_service.dto.response.TaskResponse;
 import com.todo.task_service.entity.OutboxEventEntity;
