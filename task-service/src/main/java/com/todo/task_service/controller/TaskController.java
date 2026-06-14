@@ -57,35 +57,6 @@ public class TaskController {
     @PatchMapping("/modify")
     public TaskResponse modifyTask(@RequestBody TaskRequest taskRequest, Authentication authentication) {
         String email = authentication.getName();
-        UUID taskId = taskRequest.getTaskId();
-        TaskResponse response = null;
-
-        if (taskRequest.getTaskTitle() != null) {
-            response = taskService.modifyTask(taskId, email, taskRequest.getTaskTitle(), "taskTitle");
-        }
-        if (taskRequest.getTaskDetails() != null) {
-            response = taskService.modifyTask(taskId, email, taskRequest.getTaskDetails(), "taskDetails");
-        }
-        if (taskRequest.getTaskDueDate() != null) {
-            response = taskService.modifyTask(taskId, email, taskRequest.getTaskDueDate(), "taskDueDate");
-        }
-        if (taskRequest.getTaskPriority() != null) {
-            response = taskService.modifyTask(taskId, email, taskRequest.getTaskPriority(), "taskPriority");
-        }
-        if (taskRequest.getTaskStatus() != null) {
-            response = taskService.modifyTask(taskId, email, taskRequest.getTaskStatus(), "taskStatus");
-        }
-        if (taskRequest.getTaskCategory() != null) {
-            response = taskService.modifyTask(taskId, email, taskRequest.getTaskCategory(), "taskCategory");
-        }
-
-        if (response != null) {
-            return response;
-        }
-
-        return TaskResponse.builder()
-                .taskId(taskId)
-                .msg("No valid field provided for modification")
-                .build();
+        return taskService.modifyTask(email, taskRequest);
     }
 }

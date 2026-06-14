@@ -4,7 +4,7 @@ spring:
     name: auth-service
 
     jwt:
-      secret: -- add a long secret key here  --
+      secret: 
       access-expiration: 3600000
       token-expiration: 604800000
 
@@ -28,8 +28,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: -- add your email here --
-    password: -- add your email password here for smtp service --
+    username: prgs2382@gmail.com
+    password: 
     properties:
       mail:
         smtp:

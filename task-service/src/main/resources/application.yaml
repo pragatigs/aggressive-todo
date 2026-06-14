@@ -4,7 +4,7 @@ spring:
     name: task-service
 
     jwt:
-      secret: -- add a long secret key here  --
+      secret: 
       access-expiration: 3600000
       token-expiration: 604800000
 

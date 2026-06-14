@@ -767,7 +767,6 @@
         console.log('login response:', JSON.stringify(data));
         if (data.status === 'Success') {
             localStorage.setItem('userEmail', email);
-            localStorage.setItem('accessToken', data.accessToken);
             showToast('Welcome back!');
             setTimeout(() => { window.location.href = 'todo-home.html'; }, 800);
         } else {

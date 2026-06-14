@@ -96,11 +96,19 @@ public class AuthController {
 
         response.addCookie(refreshCookie);
 
+        Cookie accessCookie = new Cookie("accessToken", accessToken);
+        accessCookie.setHttpOnly(true);
+        accessCookie.setSecure(false);  // true in production
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge(60 * 60);
+
+        response.addCookie(accessCookie);
+
         return AuthResponse.builder()
                 .email(email)
                 .status("Success")
                 .msg("Login successful")
-                .accessToken(accessToken).build();
+                .build();
     }
 
     @PostMapping("/forgot-password")
@@ -125,7 +133,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public AuthResponse refresh(HttpServletRequest request) {
+    public AuthResponse refresh(HttpServletRequest request, HttpServletResponse response) {
 
         String refreshToken = null;
 
@@ -146,10 +154,17 @@ public class AuthController {
             throw new RuntimeException("Invalid refresh token");
         }
         String newAccessToken = jwtService.generateAccessToken(email);
-        System.out.println(newAccessToken);
+
+        Cookie accessCookie = new Cookie("accessToken", newAccessToken);
+        accessCookie.setHttpOnly(true);
+        accessCookie.setSecure(false);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge(60 * 60);
+
+        response.addCookie(accessCookie);
+
         return AuthResponse.builder()
                 .email(email)
-                .accessToken(newAccessToken)
                 .build();
     }
 }

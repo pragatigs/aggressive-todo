@@ -11,9 +11,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.todo.task_service.dto.request.TaskRequest;
 import com.todo.task_service.dto.response.TaskResponse;
+import com.todo.task_service.entity.OutboxEventEntity;
 import com.todo.task_service.entity.TaskEntity;
+import com.todo.task_service.repository.OutboxEventRepository;
 import com.todo.task_service.repository.TaskRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TaskService {
     private final TaskRepository taskRepository;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     public Page<TaskResponse> getAllTasks (String email, Pageable pageable){
         Page<TaskEntity> entityPage = taskRepository.findByEmail(email, pageable);
@@ -53,6 +61,20 @@ public class TaskService {
         taskEntity.setTaskCategory(taskCategory);
 
         TaskEntity savedTask = taskRepository.save(taskEntity);
+        OutboxEventEntity outboxEvent = new OutboxEventEntity();
+        outboxEvent.setAggregateId(savedTask.getId());
+        outboxEvent.setAggregateType("TASK");
+        outboxEvent.setEventType(OutboxEventEntity.Event.TASK_CREATED);
+
+        String payload = "";
+        try {
+            payload = objectMapper.writeValueAsString(taskEntity);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Serialized TaskEntity payload: " + payload);
+        outboxEvent.setPayload(payload);
+        outboxEventRepository.save(outboxEvent);
 
         return TaskResponse.builder().email(email)
         .taskId(savedTask.getId()).taskStatus("DONE").msg("None").build();
@@ -60,6 +82,23 @@ public class TaskService {
 
     public TaskResponse deleteTask(UUID taskId, String email){
         try{
+            TaskEntity taskEntity = taskRepository.findById(taskId)
+            .orElseThrow(() -> new RuntimeException("Task not found"));
+
+            OutboxEventEntity outboxEvent = new OutboxEventEntity();
+            outboxEvent.setAggregateId(taskEntity.getId());
+            outboxEvent.setAggregateType("TASK");
+            outboxEvent.setEventType(OutboxEventEntity.Event.TASK_DELETED);
+
+            String payload = "";
+            try {
+                payload = objectMapper.writeValueAsString(taskEntity);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            System.out.println("Serialized TaskEntity payload: " + payload);
+            outboxEvent.setPayload(payload);
+            outboxEventRepository.save(outboxEvent);
             taskRepository.deleteById(taskId);
             return TaskResponse.builder()
             .taskId(taskId)
@@ -74,56 +113,66 @@ public class TaskService {
         }
     }
 
-    public TaskResponse modifyTask(UUID taskId, String email, Object newValue, String fieldName) {
-        Optional<TaskEntity> optionalTask = taskRepository.findById(taskId);
-        if (optionalTask.isPresent()) {
-            TaskEntity task = optionalTask.get();
-            if (!task.getEmail().equals(email)) {
-                return TaskResponse.builder()
+    public TaskResponse modifyTask(String email, TaskRequest request) {
+
+        UUID taskId = request.getTaskId();
+
+        TaskEntity task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        if (!task.getEmail().equals(email)) {
+            return TaskResponse.builder()
                     .taskId(taskId)
-                    .msg("Unauthorized modification attempt by " + email)
+                    .msg("Unauthorized")
                     .build();
-            }
-            switch (fieldName) {
-                case "taskTitle":
-                    task.setTaskTitle((String) newValue);
-                    break;
-                case "taskDetails":
-                    task.setTaskDetails((String) newValue);
-                    break;
-                case "taskDueDate":
-                    task.setTaskDueDate((LocalDateTime) newValue);
-                    break;
-                case "taskPriority":
-                    task.setTaskPriority((TaskEntity.Priority) newValue);
-                    break;
-                case "taskStatus":
-                    task.setTaskStatus((TaskEntity.Status) newValue);
-                    // Set delete timer if marking as DONE (7 days from now)
-                    if (newValue == TaskEntity.Status.DONE) {
-                        task.setTaskDeleteAfter(LocalDateTime.now().plusDays(7));
-                    }
-                    break;
-                case "taskCategory":
-                    task.setTaskCategory((TaskEntity.Category) newValue);
-                    break;
-                default:
-                    return TaskResponse.builder()
-                        .taskId(taskId)
-                        .msg("Invalid field name: " + fieldName)
-                        .build();
-            }
-            taskRepository.save(task);
-            return TaskResponse.builder()
-                .taskId(taskId)
-                .msg("Modification successful for " + email + " on field " + fieldName)
-                .build();
-        } else {
-            return TaskResponse.builder()
-                .taskId(taskId)
-                .msg("Task not found for modification: " + email + " with task ID " + taskId)
-                .build();
         }
+
+        if (request.getTaskTitle() != null) {
+            task.setTaskTitle(request.getTaskTitle());
+        }
+
+        if (request.getTaskDetails() != null) {
+            task.setTaskDetails(request.getTaskDetails());
+        }
+
+        if (request.getTaskDueDate() != null) {
+            task.setTaskDueDate(request.getTaskDueDate());
+        }
+
+        if (request.getTaskPriority() != null) {
+            task.setTaskPriority(request.getTaskPriority());
+        }
+
+        if (request.getTaskStatus() != null) {
+            task.setTaskStatus(request.getTaskStatus());
+
+            if (request.getTaskStatus() == TaskEntity.Status.DONE) {
+                task.setTaskDeleteAfter(LocalDateTime.now().plusDays(7));
+            }
+        }
+
+        if (request.getTaskCategory() != null) {
+            task.setTaskCategory(request.getTaskCategory());
+        }
+
+        TaskEntity savedTask = taskRepository.save(task);
+
+        OutboxEventEntity event = new OutboxEventEntity();
+        event.setAggregateId(savedTask.getId());
+        event.setAggregateType("TASK");
+        event.setEventType(OutboxEventEntity.Event.TASK_UPDATED);
+        try {
+            event.setPayload(objectMapper.writeValueAsString(savedTask));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        outboxEventRepository.save(event);
+
+        return TaskResponse.builder()
+                .taskId(taskId)
+                .msg("Task updated")
+                .build();
     }
 
     @Scheduled(fixedDelay = 300000)  // Run every 5 minutes

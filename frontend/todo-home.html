@@ -1425,7 +1425,6 @@
 
   function logout() {
     localStorage.removeItem('userEmail');
-    localStorage.removeItem('accessToken');
     window.location.href = 'auth-frontend.html';
   }
 
@@ -1568,28 +1567,46 @@
   
   // ===== API Helper =====
   async function apiCall(url, options = {}) {
-    const token = localStorage.getItem('accessToken');
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
     };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
     
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include',
     });
 
     if (response.status === 401) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userEmail');
-      window.location.href = 'auth-frontend.html';
-    }
+      try {
+        // Call refresh endpoint
+        const refreshRes = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include'
+        });
 
-    return response;
+        if (refreshRes.ok) {
+          // Token refreshed, retry original request
+          response = await fetch(url, {
+            ...options,
+            headers,
+            credentials: 'include',
+          });
+        } else {
+          // Refresh failed, logout
+          localStorage.removeItem('userEmail');
+          window.location.href = 'auth-frontend.html';
+        }
+    } catch (e) {
+        // Refresh error, logout
+        localStorage.removeItem('userEmail');
+        window.location.href = 'auth-frontend.html';
+    }
   }
+
+  return response;
+}
 
   // ===== Toast notification =====
   function showToast(message, type = 'success') {
