@@ -1,0 +1,37 @@
+{
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "email": {
+        "type": "keyword"
+      },
+     "taskTitle": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "taskDetails": {
+        "type": "text"
+      },
+      "taskCreatedAt": {
+        "type": "date"
+      },
+      "taskDueDate": {
+        "type": "date"
+      },
+      "taskPriority": {
+        "type": "keyword"
+      },
+      "taskStatus": {
+        "type": "keyword"
+      },
+      "taskCategory": {
+        "type": "keyword"
+      }
+    }
+  }

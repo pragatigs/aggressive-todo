@@ -1,0 +1,6 @@
+1. You write a Flink job (Java class with main method)
+2. You build it into a fat JAR
+3. You submit the JAR to the JobManager
+4. JobManager analyzes the DAG
+5. JobManager distributes tasks to TaskManagers
+6. TaskManagers execute continuously until stopped

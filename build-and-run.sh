@@ -27,6 +27,37 @@ until curl -fsS http://localhost:8082/actuator/health >/dev/null; do
   sleep 2
 done
 
+echo "Creating Elasticsearch index..."
+cd elasticsearch
+./create-index.sh
+
+cd ..
+
+echo ""
+
+echo "Creating kafka topics..."
+docker exec kafka /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --if-not-exists \
+  --topic outbox.event.TASK_CREATED \
+  --partitions 1 \
+  --replication-factor 1
+
+docker exec kafka /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --if-not-exists \
+  --topic outbox.event.TASK_UPDATED \
+  --partitions 1 \
+  --replication-factor 1
+
+docker exec kafka /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --if-not-exists \
+  --topic outbox.event.TASK_DELETED \
+  --partitions 1 \
+  --replication-factor 1
+
 echo ""
 echo "Everything is healthy."
 echo "Frontend: http://localhost:3000"
+echo "Kibana: http://localhost:5601"
