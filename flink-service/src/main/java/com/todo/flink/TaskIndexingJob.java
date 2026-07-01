@@ -31,9 +31,9 @@ public class TaskIndexingJob {
 
         DataStream<TaskDocument> parsedEvents = rawEvents.map(new ParseDebeziumEvent());
 
-        // parsedEvents.print(); // temporary — we'll replace with ES sink next
+        // parsedEvents.print();
 
-        System.out.println("PARSINGGGGGGGGGG calling ES sinkkkkkk");
+        // System.out.println("PARSINGGGGGGGGGG calling ES sinkkkkkk");
 
         parsedEvents.sinkTo(TaskElasticsearchSink.build());
         env.execute("Task Indexing Job");

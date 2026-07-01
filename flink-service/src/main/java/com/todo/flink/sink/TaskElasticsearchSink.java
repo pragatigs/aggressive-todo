@@ -9,7 +9,6 @@ import org.elasticsearch.client.Requests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-// import java.util.HashMap;
 import java.util.Map;
 
 public class TaskElasticsearchSink {
@@ -19,7 +18,7 @@ public class TaskElasticsearchSink {
     .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     public static ElasticsearchSink<TaskDocument> build() {
-        System.out.println("PARSINGGGGGGGGGG called ES sinkkkkkk");
+        // System.out.println("PARSINGGGGGGGGGG called ES sinkkkkkk");
         return new Elasticsearch7SinkBuilder<TaskDocument>()
             .setBulkFlushMaxActions(1)
             .setHosts(new HttpHost("elasticsearch", 9200, "http"))
@@ -33,7 +32,7 @@ public class TaskElasticsearchSink {
                             .source(json);
 
                     indexer.add(request);
-                    System.out.println("PARSINGGGGGGGGGG done ES sinkkkkkk");
+                    // System.out.println("PARSINGGGGGGGGGG done ES sinkkkkkk");
                 } catch (Exception e) {
                     throw new RuntimeException(
                             "Failed to convert TaskDocument to ES request", e);

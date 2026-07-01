@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class DebeziumEnvelope {
     private SchemaInfo schema;
-    private String payload;  // this is a JSON STRING, not an object
+    private String payload;  // this is a JSON STRING, not an object!!!
 }
 
 @Data
